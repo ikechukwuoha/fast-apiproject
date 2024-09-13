@@ -24,7 +24,11 @@ class UserCreate(BaseModel):
     phone: str
     email: EmailStr
     password:str
-    
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
 
 
 class UserResponse(BaseModel):
