@@ -1,5 +1,7 @@
 from datetime import datetime
-from pydantic import BaseModel, EmailStr
+import re
+from typing import Optional
+from pydantic import BaseModel, EmailStr, field_validator
 
 from app.utils.security import hash_password
 
@@ -10,14 +12,17 @@ class User(BaseModel):
     phone:str
     email: EmailStr
     disabled: bool = True
-    created_at: datetime = datetime.now() 
-    updated_at: datetime = datetime.now()
+    last_email_update: Optional[datetime] = datetime.now()
+    created_at: datetime = datetime.now 
+    updated_at: datetime = datetime.now
     
     class Config:
         from_attributes = True
 
 class UserInDB(User):
-    hashed_password: hash_password
+    hashed_password: str
+    
+
 
 class UserCreate(BaseModel):
     first_name: str
@@ -26,4 +31,6 @@ class UserCreate(BaseModel):
     phone:str
     email: EmailStr
     password: str
+    last_email_update: Optional[datetime] = datetime.now()
     
+

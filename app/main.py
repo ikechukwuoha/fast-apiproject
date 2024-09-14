@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routers import items, users
+from app.routers import users
 from app.config.settings import settings
 from fastapi.middleware.cors import CORSMiddleware
 

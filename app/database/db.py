@@ -8,3 +8,4 @@ database = client[settings.DATABASE_NAME]
 
 # Access the users collection
 users_collection = database["users"]
+admin_user_collection = database["admin_user"]
