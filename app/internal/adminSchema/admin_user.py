@@ -1,50 +1,54 @@
-from datetime import datetime
 import re
-from typing import Optional
 from fastapi import HTTPException, status
 from pydantic import BaseModel, EmailStr, Field, field_validator
+from datetime import datetime
+from typing import Dict, Optional
+from app.database.db import admin_users_collection
 from bson import ObjectId
-from app.utils.security import hash_password
-from app.database.db import users_collection
+from app.database.db import admin_users_collection
+from app.models.users import UserInDB
 
 
-class User(BaseModel):
+
+class AdminUser(BaseModel):
     id: Optional[str] = None
     first_name: str
-    other_name: str
+    other_name: Optional[str] = None
     last_name: str
     phone: str
     email: EmailStr
-    is_active: bool = Field(default=False, exclude=True)
-    is_admin: bool = Field(default=False, exclude=True)
-    is_staff: bool = Field(default=False, exclude=True)
-    is_superuser: bool = Field(default=False, exclude=True)
-    role: Optional[str] = None 
+    role: str  # Admin role field
+    permission: Optional[dict] = None 
+    super_user: bool = Field(default=False)
+    disabled: bool = True
     last_email_update: Optional[datetime] = datetime.now()
     created_at: datetime = datetime.now()
     updated_at: datetime = datetime.now()
     
-    model_config = {
-        "from_attributes": True
-    }
-
-
-
-class UserInDB(User):
+    
+class AdminUserInDB(AdminUser):
     hashed_password: str
+    role: str = "superUser"
     last_email_update: Optional[datetime] = datetime.now()
-    
-    
-    
 
-class UserCreate(BaseModel):
+
+
+
+
+class AdminUserCreate(BaseModel):
     first_name: str
-    other_name: str
+    other_name: Optional[str] = None
     last_name: str
     phone: str
     email: EmailStr
-    password:str
-   
+    password: str
+    role: str  # For example, 'superadmin', 'moderator', etc.
+    disabled: bool =Field(default=False)
+    permission: Optional[dict] = None 
+    super_user: bool = Field(default=False)
+    last_email_update: Optional[datetime] = datetime.now()
+    created_at: datetime = datetime.now()
+    updated_at: datetime = datetime.now()
     
     @field_validator('password', mode="before")
     def validate_password(cls, password):
@@ -65,17 +69,17 @@ class UserCreate(BaseModel):
             raise ValueError('Password must contain at least one special character (@, $, !, %, *, ?, &).')
 
         return password
-
-
-
-# Used For Login
-class LoginRequest(BaseModel):
-    email: str
-    password: str
     
 
+# Used For Login
+class AdminLoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+
 # User Update Schema
-class UserUpdate(BaseModel):
+class AdminUserUpdate(BaseModel):
     first_name: Optional[str] = None
     other_name: Optional[str] = None
     last_name: Optional[str] = None
@@ -85,32 +89,29 @@ class UserUpdate(BaseModel):
     last_email_update: Optional[datetime] = datetime.now()
 
 
-# Function for Response a User Get
-class UserResponse(BaseModel):
+class AdminUserResponse(BaseModel):
     first_name: str
-    other_name: str
     last_name: str
     phone: str
-    email: EmailStr
-    is_active: bool = False
-    is_admin: bool = False
-    is_staff: bool = False
-    is_superuser: bool = False
-    created_at: datetime=datetime.now()
-    updated_at: datetime=datetime.now()
-    message: Optional[str] = None 
+    email: str
+    disabled: bool
+    role: str  # Admin role, e.g., 'superadmin', 'moderator'
+    permission: Optional[Dict] = None
+    message: Optional[str] = None
 
-   
+
+    class Config:
+        from_attributes = True
         
-
-async def get_user_by_id(user_id: str) -> Optional[UserInDB]:
+        
+async def get_admin_user_by_id(user_id: str) -> Optional[UserInDB]:
     """Retrieve a user by ID asynchronously."""
     try:
         user_id_obj = ObjectId(user_id)  # Convert string ID to ObjectId
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user ID format")
     
-    user = await users_collection.find_one({"_id": user_id_obj})
+    user = await admin_users_collection.find_one({"_id": user_id_obj})
     if user:
         return UserInDB(**user)
     return None

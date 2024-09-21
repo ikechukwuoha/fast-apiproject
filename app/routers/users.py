@@ -2,9 +2,8 @@ import json
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.responses import JSONResponse
 from app.config.settings import settings
-from app.services.user_services import register_user, update_user
+from app.services.user_services import register_user, update_user, create_user, authenticate_user, login_user_service
 from app.schemas.users import UserCreate, UserResponse, LoginRequest, UserUpdate
-from app.services.user_services import create_user, authenticate_user, login_user_service
 from app.utils.security import create_access_token
 from datetime import timedelta
 from pydantic import BaseModel
@@ -15,7 +14,7 @@ router = APIRouter()
 
 
 # This is The Sign-Up Route
-@router.post("/register", response_model=UserResponse)
+@router.post("/register")
 async def register_user_endpoint(user_data: UserCreate):
     return await register_user(user_data)
  
